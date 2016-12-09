@@ -39,6 +39,7 @@ function love.load()
 		Teleporter = love.graphics.newImage("/Texture/Objects/Teleporter.png"),
 		HoverBoots = love.graphics.newImage("/Texture/Objects/HoverBoots.png"),
 		Bomb = love.graphics.newImage("/Texture/Objects/Bomb.png"),
+		BounceBall = love.graphics.newImage("/Texture/Objects/BounceBall.png"),
 	}
 	Sound = {
 		Splash = love.audio.newSource("/Sound/Splash.wav","static"),
@@ -103,10 +104,13 @@ function love.load()
 		["HoverBoots"] = {},
 		["Dirt"] = {},
 		["Bomb"] = {},
+		["BounceBall"] = {},
 	}
 	Floor = {}
-	Conveyor = {}
-	Conveyor.cooldown=0
+	Special = {
+		conveyor = 0,
+		bounceball = 0,
+	}
 	BeatStage = false;
 	for i = 1,13 do
 		Plate = {}
@@ -124,7 +128,7 @@ function love.load()
 	index = {"Chip01","Chip02"}--,"Chip03","Chip04","Chip05"
 	MusicIndex = index[love.math.random(#index)]
 
-	CurrentStage = "test"
+	CurrentStage = 11
 	local KEK = {["up"]={x=0,y=(-50)},["down"]={x=0,y=50},["right"]={x=50,y=0},["left"]={x=(-50),y=0}}
 	function ResetStage(Lnext)
 		for i = 1,10 do
@@ -204,7 +208,7 @@ function love.load()
 					if (f.Y == Player.Y+KEK[k].y)and(f.X==Player.X+KEK[k].x)then
 						if Player.Inventory.RedKey then
 							table.remove(v,r)
-							Player.Inventory.RedKey=false
+							Player.Inventory.RedKey=false;
 							Sound.Unlock:play()
 						else Sound.Wall:play()return end
 					end
@@ -216,6 +220,7 @@ function love.load()
 						if Player.Inventory.BlueKey then
 							table.remove(v,r)
 							Player.Inventory.BlueKey=false
+							Sound.Unlock:stop()
 							Sound.Unlock:play()
 						else Sound.Wall:play()return end
 					end
@@ -227,6 +232,7 @@ function love.load()
 						if Player.Inventory.GreenKey then
 							table.remove(v,r)
 							Player.Inventory.GreenKey=false
+							Sound.Unlock:stop()
 							Sound.Unlock:play()
 						else Sound.Wall:play()return end
 					end
@@ -238,6 +244,7 @@ function love.load()
 						if Player.Inventory.YellowKey then
 							table.remove(v,r)
 							Player.Inventory.YellowKey=false
+							Sound.Unlock:stop()
 							Sound.Unlock:play()
 						else Sound.Wall:play()return end
 					end
@@ -568,56 +575,63 @@ function love.keypressed(key)
 		Player.Image = Texture.PlayerR
 	end
 end
-
-function love.update(dt)
+function love.update()
 	Music[MusicIndex]:play()
-	Conveyor.cooldown = Conveyor.cooldown + 1
-	if Conveyor.cooldown == 5 then
-		Conveyor.cooldown = 0
-		for e,f in pairs(Workspace)do
-			if Player.Inventory.HoverBoots then break end
-			if e == "ConD"then
-				for _,f in pairs(f)do
-					if (f.Y==Player.Y)and(f.X==Player.X)then
-						gayloop("down")
-						check("down")
-						break
+	if Player.Dead then return end
+	if BeatStage then return end
+
+	--[[
+	if Workspace["BounceBall"]>=1 then
+		Special.bounceball = Special.bounceball + 1
+	end
+	--]]
+	if #Workspace["ConD"]>=1 or#Workspace["ConL"]>=1 or#Workspace["ConR"]>=1 or#Workspace["ConU"]>=1 then
+		if Special.conveyor == 5 then
+			Special.conveyor = 0
+			for e,f in pairs(Workspace)do
+				if Player.Inventory.HoverBoots then break end
+				if e == "ConD"then
+					for _,f in pairs(f)do
+						if (f.Y==Player.Y)and(f.X==Player.X)then
+							gayloop("down")
+							check("down")
+							break
+						end
 					end
 				end
-			end
-			if e == "ConL"then
-				for _,f in pairs(f)do
-					if (f.Y==Player.Y)and(f.X==Player.X)then
-						gayloop("left")
-						check("left")
-						break
+				if e == "ConL"then
+					for _,f in pairs(f)do
+						if (f.Y==Player.Y)and(f.X==Player.X)then
+							gayloop("left")
+							check("left")
+							break
+						end
 					end
 				end
-			end
-			if e == "ConR"then
-				for _,f in pairs(f)do
-					if (f.Y==Player.Y)and(f.X==Player.X)then
-						gayloop("right")
-						check("right")
-						break
+				if e == "ConR"then
+					for _,f in pairs(f)do
+						if (f.Y==Player.Y)and(f.X==Player.X)then
+							gayloop("right")
+							check("right")
+							break
+						end
 					end
 				end
-			end
-			if e == "ConU"then
-				for _,f in pairs(f)do
-					if (f.Y==Player.Y)and(f.X==Player.X)then
-						gayloop("up")
-						check("up")
-						break
+				if e == "ConU"then
+					for _,f in pairs(f)do
+						if (f.Y==Player.Y)and(f.X==Player.X)then
+							gayloop("up")
+							check("up")
+							break
+						end
 					end
 				end
 			end
 		end
+		Special.conveyor = Special.conveyor + 1
 	end
-	Player.cooldown = Player.cooldown + 1
 
-	if Player.Dead then return end
-	if BeatStage then return end
+	Player.cooldown = Player.cooldown + 1
 	if love.keyboard.isDown("up")then
 		if Player.cooldown >= 10 then
 			Player.cooldown = 0
@@ -654,7 +668,7 @@ end
 
 function love.draw()
 	love.graphics.setColor(255,255,255)
-	for i, v in pairs(Floor)do love.graphics.draw(Texture.Plate,v.X,v.Y)end
+	for _, v in pairs(Floor)do love.graphics.draw(Texture.Plate,v.X,v.Y)end
 	for i,v in pairs(Workspace)do
 		for c,f in pairs(v)do
 			if i == "YellowKey"then
@@ -671,6 +685,9 @@ function love.draw()
 				love.graphics.draw(Texture.Key,f.X,f.Y)
 			elseif i == "Dirt"then
 				love.graphics.setColor(102,51,0)
+				love.graphics.rectangle("fill",f.X,f.Y,50,50)
+			elseif i == "BounceBall"then
+				love.graphics.setColor(0,0,0)
 				love.graphics.rectangle("fill",f.X,f.Y,50,50)
 			else
 				love.graphics.setColor(255,255,255)

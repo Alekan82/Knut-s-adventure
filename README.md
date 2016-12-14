@@ -14,6 +14,8 @@ Controls:
 
 * R: Restart
 
-* M: Mute
+* M: Mute music
 
-## This game uses the Löve library, you will need to have downloaded it to play the game.
+* F: Full screen (will restart level)
+
+## This game uses the [Löve](https://love2d.org/) library, you will need to have downloaded it to play the game.

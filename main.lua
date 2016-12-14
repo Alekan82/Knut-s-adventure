@@ -1,7 +1,10 @@
 function love.load()
 	love.window.setMode(900,650)
-	--success = love.window.setFullscreen(true,"desktop")
+	success = love.window.setFullscreen(true,"desktop")
 	love.window.setTitle(" ")
+    SPEED_FAST = 5;
+    SPEED_SLOW = 20;
+
 	RESOLUTION = {
 		SCREEN_SIZE = {x=love.graphics.getWidth(),y=love.graphics.getHeight()},
 		BLOCK_SIZE = {X=50,Y=50}
@@ -79,7 +82,7 @@ function love.load()
 		Points = 0,
 		Dead = false,
 		cooldown = 0,
-		Wait = 5,
+		Wait = SPEED_SLOW,
 		Inventory = {
 			Flippers = false,
 			RedKey = false,
@@ -614,6 +617,15 @@ function love.keypressed(key)
 		ResetStage()
 		Player.Image = Texture.PlayerR
 	end
+    if key=="lshift"then
+        Player.Wait = SPEED_FAST
+    end
+end
+
+function love.keyreleased(key)
+    if key=="lshift"then
+        Player.Wait = SPEED_SLOW
+    end
 end
 
 function love.update()

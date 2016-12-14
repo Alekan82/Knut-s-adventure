@@ -1,6 +1,6 @@
 function love.load()
 	love.window.setMode(900,650)
-	success = love.window.setFullscreen(true,"desktop")
+	--success = love.window.setFullscreen(true,"desktop")
 	love.window.setTitle(" ")
 	RESOLUTION = {
 		SCREEN_SIZE = {x=love.graphics.getWidth(),y=love.graphics.getHeight()},
@@ -48,7 +48,9 @@ function love.load()
 		HoverBoots = love.graphics.newImage("/Texture/Objects/HoverBoots.png"),
 		Bomb = love.graphics.newImage("/Texture/Objects/Bomb.png"),
 		BounceBall = love.graphics.newImage("/Texture/Objects/BounceBall.png"),
-		Hint = love.graphics.newImage("/Texture/Objects/Hint.png")
+		Hint = love.graphics.newImage("/Texture/Objects/Hint.png"),
+		Ice = love.graphics.newImage("/Texture/Objects/Ice.png"),
+		DDosKid = love.graphics.newImage("/Texture/Objects/DDOSKID.png"),
 	}
 	Sound = {
 		Splash = love.audio.newSource("/Sound/Splash.wav","static"),
@@ -77,6 +79,7 @@ function love.load()
 		Points = 0,
 		Dead = false,
 		cooldown = 0,
+		Wait = 5,
 		Inventory = {
 			Flippers = false,
 			RedKey = false,
@@ -118,12 +121,15 @@ function love.load()
 		["Bomb"] = {},
 		["BounceBall"] = {},
 		["Hint"] = {},
+		["DDosKid"] = {},
+		["Ice"] = {},
 	}
 	Floor = {}
 	Special = {
 		conveyor = 0,
 		bounceball = 0,
-		bounceList = {}
+		bounceList = {},
+		Iceway = "right",
 	}
 	BeatStage = false;
 	for i = 1,13 do
@@ -158,12 +164,7 @@ function love.load()
 
 	CurrentStage = 1
 	
-	local MovementDirections = {
-		["up"]={x=0, y=(-BLOCKSIZE.Y)},
-		["down"]={x=0, y=BLOCKSIZE.Y},
-		["right"]={x=BLOCKSIZE.X, y=0},
-		["left"]={x=(-BLOCKSIZE.X), y=0}
-	}
+	local MovementDirections = {["up"]={x=0, y=(-BLOCKSIZE.Y)}, ["down"]={x=0, y=BLOCKSIZE.Y}, ["right"]={x=BLOCKSIZE.X, y=0}, ["left"]={x=(-BLOCKSIZE.X), y=0}}
 
 	function ResetStage(Lnext)
 		for i = 1,10 do
@@ -338,6 +339,13 @@ function love.load()
 					if f.X==Player.X+MovementDirections[k].x and f.Y==Player.Y+MovementDirections[k].y then
 						Sound.Burn:play()
 						Player.Dead=true;
+					end
+				end
+			end
+			if i == "DDosKid"then
+				for _,f in pairs(v)do
+					if f.X==Player.X+MovementDirections[k].x and f.Y==Player.Y+MovementDirections[k].y then
+						x = z +a 
 					end
 				end
 			end
@@ -551,9 +559,12 @@ function love.load()
 			Add("Bomb",x,y)
 		elseif t=="O"then
 			Add("BounceBall",x,y)
-			local c={Z=1}
 		elseif t=="H"then
 			Add("Hint",x,y)
+		elseif t=="D"then
+			Add("DDosKid",x,y)
+		elseif t=="i"then
+			Add("Ice",x,y)
 		elseif t==","then
 			for _,v in pairs(Workspace)do
 				for _,f in pairs(v)do
@@ -682,28 +693,28 @@ function love.update()
 
 	Player.cooldown = Player.cooldown + 1
 	if love.keyboard.isDown("up")then
-		if Player.cooldown >= 10 then
+		if Player.cooldown >= Player.Wait then
 			Player.cooldown = 0
 			Player.Image = Texture.PlayerU
 			gayloop("up")
 			check("up")
 		end
 	elseif love.keyboard.isDown("down")then
-		if Player.cooldown >= 10 then
+		if Player.cooldown >= Player.Wait then
 			Player.cooldown = 0
 			Player.Image = Texture.PlayerD
 			gayloop("down")
 			check("down")
 		end
 	elseif love.keyboard.isDown("right")then
-		if Player.cooldown >= 10 then
+		if Player.cooldown >= Player.Wait then
 			Player.cooldown = 0
 			Player.Image = Texture.PlayerR
 			gayloop("right")
 			check("right")
 		end
 	elseif love.keyboard.isDown("left")then
-		if Player.cooldown >= 10 then
+		if Player.cooldown >= Player.Wait then
 			Player.cooldown = 0
 			Player.Image = Texture.PlayerL
 			gayloop("left")

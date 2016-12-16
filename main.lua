@@ -1,10 +1,9 @@
 function love.load()
 	love.window.setMode(900,650)
-	success = love.window.setFullscreen(true,"desktop")
+	success = love.window.setFullscreen(false,"desktop")
 	love.window.setTitle(" ")
-    SPEED_FAST = 5;
-    SPEED_SLOW = 20;
-
+    SPEED_FAST = 6;
+    SPEED_SLOW = 10;
 	RESOLUTION = {
 		SCREEN_SIZE = {x=love.graphics.getWidth(),y=love.graphics.getHeight()},
 		BLOCK_SIZE = {X=50,Y=50}
@@ -82,7 +81,7 @@ function love.load()
 		Points = 0,
 		Dead = false,
 		cooldown = 0,
-		Wait = SPEED_SLOW,
+		Walkspeed = SPEED_SLOW,
 		Inventory = {
 			Flippers = false,
 			RedKey = false,
@@ -93,6 +92,7 @@ function love.load()
 			HoverBoots = false,
 		},
 		Hint = false,
+		Sliding = false,
 	}
 	Workspace = {
 		["Block"] = {},
@@ -133,9 +133,12 @@ function love.load()
 		bounceball = 0,
 		bounceList = {},
 		Iceway = "right",
+		cooldownICE = 10;
+
 	}
 	BeatStage = false;
-	for i = 1,13 do
+
+	for i = 1,13 do -- Make floor!
 		Plate = {}
 		Plate.X = 0
 		Plate.Y = BLOCKSIZE.Y*(i-1)
@@ -167,7 +170,7 @@ function love.load()
 
 	CurrentStage = 1
 	
-	local MovementDirections = {["up"]={x=0, y=(-BLOCKSIZE.Y)}, ["down"]={x=0, y=BLOCKSIZE.Y}, ["right"]={x=BLOCKSIZE.X, y=0}, ["left"]={x=(-BLOCKSIZE.X), y=0}}
+	MovementDirections = {["up"]={x=0, y=(-BLOCKSIZE.Y)},["down"]={x=0, y=BLOCKSIZE.Y},["right"]={x=BLOCKSIZE.X, y=0},["left"]={x=(-BLOCKSIZE.X), y=0}}
 
 	function ResetStage(Lnext)
 		for i = 1,10 do
@@ -190,6 +193,10 @@ function love.load()
 		local File = {}
 		if CurrentStage == "test"then
 			for line in love.filesystem.lines("/Levels/TestStage")do
+				table.insert(File,line)
+			end
+		elseif CurrentStage == "Lobby"then
+			for line in love.filesystem.lines("/Levels/Lobby")do
 				table.insert(File,line)
 			end
 		else
@@ -216,12 +223,12 @@ function love.load()
 							Sound.Splash:play()
 							if k=="right"then 
 								Player.Image=Texture.Player_WR 
-								elseif k=="left"then 
-									Player.Image=Texture.Player_WL 
-									elseif k=="up"then
-										Player.Image=Texture.Player_WU
-										elseif k=="down"then
-											Player.Image=Texture.Player_WD
+							elseif k=="left"then 
+								Player.Image=Texture.Player_WL 
+							elseif k=="up"then
+								Player.Image=Texture.Player_WU
+							elseif k=="down"then
+								Player.Image=Texture.Player_WD
 							end
 						else
 							Sound.Splash:stop()
@@ -348,7 +355,7 @@ function love.load()
 			if i == "DDosKid"then
 				for _,f in pairs(v)do
 					if f.X==Player.X+MovementDirections[k].x and f.Y==Player.Y+MovementDirections[k].y then
-						x = z +a 
+						x=z+a 
 					end
 				end
 			end
@@ -618,13 +625,18 @@ function love.keypressed(key)
 		Player.Image = Texture.PlayerR
 	end
     if key=="lshift"then
-        Player.Wait = SPEED_FAST
+        Player.Walkspeed = SPEED_FAST
+    end
+    if Player.Sliding == false then 
+    	if key=="right"or key=="left"or key=="up"or key=="down"then
+    		Special.Iceway = key;
+	    end
     end
 end
 
 function love.keyreleased(key)
     if key=="lshift"then
-        Player.Wait = SPEED_SLOW
+    	Player.Walkspeed = SPEED_SLOW
     end
 end
 
@@ -702,38 +714,75 @@ function love.update()
 		end
 		Special.conveyor = Special.conveyor + 1
 	end
+	if #Workspace["Ice"]>=1 then
+		Special.cooldownICE = Special.cooldownICE - 1
+		if Special.cooldownICE <= 0 then
+			Special.cooldownICE = 5;
+			for _,v in pairs(Workspace["Ice"])do
+				if v.X == Player.X and v.Y == Player.Y then
+					Player.Sliding = true;
+					gayloop(Special.Iceway)
+					for _,v in pairs(Workspace["Block"])do
+						if v.X == Player.X + MovementDirections[Special.Iceway].x and v.Y == Player.Y+MovementDirections[Special.Iceway].x then
+							Special.Iceway = "down"
+							for _,v in pairs(Workspace)do
+								for _,i in pairs(v)do
+									i.X = i.X + (-MovementDirections["down"].x)
+									i.Y = i.Y + (-MovementDirections["down"].y)
+								end
+							end break
+						else
+							for _,v in pairs(Workspace)do
+								for _,i in pairs(v)do
+									i.X = i.X + (-MovementDirections[Special.Iceway].x)
+									i.Y = i.Y + (-MovementDirections[Special.Iceway].y)
+								end
+							end break
+						end
+					end
+					break
+				else
+					Player.Sliding = false;
+				end
+			end
+		end
+	end
 
 	Player.cooldown = Player.cooldown + 1
+	if Player.Sliding then return end
+	if Player.image == Texture.Splash then Player.image = Texture.PlayerL end
+
 	if love.keyboard.isDown("up")then
-		if Player.cooldown >= Player.Wait then
+		if Player.cooldown >= Player.Walkspeed then
 			Player.cooldown = 0
 			Player.Image = Texture.PlayerU
 			gayloop("up")
 			check("up")
 		end
 	elseif love.keyboard.isDown("down")then
-		if Player.cooldown >= Player.Wait then
+		if Player.cooldown >= Player.Walkspeed then
 			Player.cooldown = 0
 			Player.Image = Texture.PlayerD
 			gayloop("down")
 			check("down")
 		end
-	elseif love.keyboard.isDown("right")then
-		if Player.cooldown >= Player.Wait then
+	end
+
+	if love.keyboard.isDown("right")then
+		if Player.cooldown >= Player.Walkspeed then
 			Player.cooldown = 0
 			Player.Image = Texture.PlayerR
 			gayloop("right")
 			check("right")
 		end
 	elseif love.keyboard.isDown("left")then
-		if Player.cooldown >= Player.Wait then
+		if Player.cooldown >= Player.Walkspeed then
 			Player.cooldown = 0
 			Player.Image = Texture.PlayerL
 			gayloop("left")
 			check("left")
 		end
 	end
-	if Player.image == Texture.Splash then Player.image = Texture.PlayerL end
 end
 
 function love.draw()
@@ -772,6 +821,8 @@ function love.draw()
 	if CurrentStage == "test"then
 		love.graphics.print("Level: TEST",BLOCKSIZE.X*13.1,BLOCKSIZE.Y*0.1,0,1,1)
 		love.graphics.print("\nBLOCK X: "..BLOCKSIZE.X.."\nBLOCK Y: "..BLOCKSIZE.Y.."\nPlayerPosX: "..Player.X.."\nPlayerPosY: "..Player.Y.."\nBlockPos X,Y "..Workspace["Block"][1].X.."\n"..Workspace["Block"][1].Y,BLOCKSIZE.X*13.1,BLOCKSIZE.Y*0.1,0,1,1)
+		elseif CurrentStage == "Lobby" then
+
 	else
 		love.graphics.print("Level: ".. StageIndex[CurrentStage] ,BLOCKSIZE.X*13.5,BLOCKSIZE.Y*0.1)
 		love.graphics.print("\nTiger biscuits left: "..KexLeft ,BLOCKSIZE.X*13.5,BLOCKSIZE.Y*0.1)

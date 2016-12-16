@@ -32,8 +32,8 @@ end
 function love.load()
     love.window.setMode(900,650)
     love.window.setTitle("Knut's Adventure")
-    SPEED_FAST = 5;
-    SPEED_SLOW = 20;
+    SPEED_FAST = 7;
+    SPEED_SLOW = 15;
 
     IS_FULL_SCREEN = false
 
@@ -653,6 +653,7 @@ function love.keyreleased(key)
     if key=="lshift"then
         Player.Wait = SPEED_SLOW
     end
+    Player.cooldown = 1000
 end
 
 function love.update()

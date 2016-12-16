@@ -32,7 +32,11 @@ end
 function love.load()
     love.window.setMode(900,650)
     love.window.setTitle("Knut's Adventure")
+<<<<<<< Updated upstream
     SPEED_FAST = 7;
+=======
+    SPEED_FAST = 5;
+>>>>>>> Stashed changes
     SPEED_SLOW = 15;
 
     IS_FULL_SCREEN = false
@@ -368,7 +372,11 @@ function love.load()
             if i == "DDosKid"then
                 for _,f in pairs(v)do
                     if f.X==Player.X+MovementDirections[k].x and f.Y==Player.Y+MovementDirections[k].y then
+<<<<<<< Updated upstream
                         x = z +a 
+=======
+                        error("u got ddosd kiddo git prank n restrat")
+>>>>>>> Stashed changes
                     end
                 end
             end

@@ -14,6 +14,6 @@ Controls:
 
 * r: Restart
 
- F: Full screen (will restart level)
+* m: Mute music
 
-## This game uses the [Löve](https://love2d.org/) library, you will need to have downloaded it to play the game.
+## This game uses the [Löve](https://love2d.org/) library, you will need to download it to play the game.

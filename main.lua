@@ -32,6 +32,10 @@ function Add(type,x,y)
 end
 
 function love.load()
+
+    KONAMI = {"w", "w", "s", "s", "a", "d", "a", "d", "l", "r"}
+    KONAMI_INDEX = 1
+
     love.window.setMode(900,650)
     love.window.setTitle("Knut's Adventure")
     SPEED_FAST = 5;
@@ -724,7 +728,7 @@ function love.load()
             Add("Ice",x,y)
         elseif t=="I"then
             Add("IceSkates",x,y)
-        elseif t=="!"then
+        elseif t=="*"then
             Add("TFButton",x,y)
         elseif t=="E"then
             local a = {X=x*BLOCKSIZE.X,Y=y*BLOCKSIZE.Y,BOOL = true}
@@ -793,6 +797,16 @@ function love.keypressed(key)
         success = love.window.setFullscreen(IS_FULL_SCREEN, "desktop")
         setBlockSize()
         ResetStage()
+    end
+    if KONAMI_INDEX == #KONAMI then
+        CurrentStage = CurrentStage + 1
+        ResetStage()
+        KONAMI_INDEX = 1
+    end
+    if key == KONAMI[KONAMI_INDEX] then
+        KONAMI_INDEX = KONAMI_INDEX + 1
+    else
+        KONAMI_INDEX = 1
     end
 end
 

@@ -1,21 +1,19 @@
-# Otto's dream
+# Knut's adventure
 
-Otto's dream is a game
+Knut's adventure is a game.
 
 Controls:
 
-* Left: Move left
+* ←: Move left
 
-* Up: Move up
+* ↑: Move up
 
-* Down: Move down
+* ↓: Move down
 
-* Right: Move right
+* →: Move right
 
-* R: Restart
+* r: Restart
 
-* M: Mute music
-
-* F: Full screen (will restart level)
+ F: Full screen (will restart level)
 
 ## This game uses the [Löve](https://love2d.org/) library, you will need to have downloaded it to play the game.

@@ -1,5 +1,4 @@
 function setBlockSize()
-
     RESOLUTION = {
         SCREEN_SIZE = {x=love.graphics.getWidth(),y=love.graphics.getHeight()},
         BLOCK_SIZE = {X=50,Y=50}
@@ -11,7 +10,6 @@ function setBlockSize()
 
     Player.X = BLOCKSIZE.X*6
     Player.Y = BLOCKSIZE.Y*6
-
     Floor = {}
     for i = 1,13 do
         Plate = {}
@@ -28,30 +26,28 @@ function setBlockSize()
 
     MovementDirections = {["up"]={x=0, y=(-BLOCKSIZE.Y)}, ["down"]={x=0, y=BLOCKSIZE.Y}, ["right"]={x=BLOCKSIZE.X, y=0}, ["left"]={x=(-BLOCKSIZE.X), y=0}}
 end
+function Add(type,x,y)
+	local a={X=x*BLOCKSIZE.X,Y=y*BLOCKSIZE.Y}
+    table.insert(Workspace[type],a)
+end
 
 function love.load()
     love.window.setMode(900,650)
     love.window.setTitle("Knut's Adventure")
-<<<<<<< Updated upstream
-    SPEED_FAST = 7;
-=======
     SPEED_FAST = 5;
->>>>>>> Stashed changes
-    SPEED_SLOW = 15;
-
+    SPEED_SLOW = 10;
     IS_FULL_SCREEN = false
-
+    MUTED = false;
     RESOLUTION = {
         SCREEN_SIZE = {x=love.graphics.getWidth(),y=love.graphics.getHeight()},
         BLOCK_SIZE = {X=50,Y=50}
-
     }
     BLOCKSIZE = RESOLUTION.BLOCK_SIZE
     BLOCKSIZE.Y = math.floor(RESOLUTION.SCREEN_SIZE.y/13)
     BLOCKSIZE.X = math.floor(((RESOLUTION.SCREEN_SIZE.x/13)*9.5)/13)
 
-
     KexLeft = 0
+    Bonus = false;
 
     Texture = {
         Portal = love.graphics.newImage("/Texture/Objects/Portal.png"),
@@ -91,6 +87,9 @@ function love.load()
         Hint = love.graphics.newImage("/Texture/Objects/Hint.png"),
         Ice = love.graphics.newImage("/Texture/Objects/Ice.png"),
         DDosKid = love.graphics.newImage("/Texture/Objects/DDOSKID.png"),
+        IceSkates = love.graphics.newImage("/Texture/Objects/IceSkates.png"),
+        TFButton = love.graphics.newImage("/Texture/Objects/TFButton.png"),
+        TFBlock = love.graphics.newImage("/Texture/Objects/TFBlock.png"),
     }
     Sound = {
         Splash = love.audio.newSource("/Sound/Splash.wav","static"),
@@ -110,7 +109,6 @@ function love.load()
         Chip01 = love.audio.newSource("/Soundtracks/Chip01.mp3"),
         Chip02 = love.audio.newSource("/Soundtracks/Chip02.mp3"),
         Chip03 = love.audio.newSource("/Soundtracks/Chip03.mp3"),
-        Chip04 = love.audio.newSource("/Soundtracks/Chip04.mp3")
     }
     Player = {
         X = BLOCKSIZE.X*6,
@@ -120,6 +118,7 @@ function love.load()
         Dead = false,
         cooldown = 0,
         Wait = SPEED_SLOW,
+        Sliding = false,
         Inventory = {
             Flippers = false,
             RedKey = false,
@@ -128,8 +127,30 @@ function love.load()
             YellowKey = false,
             FireShoes = false,
             HoverBoots = false,
+            IceSkates = false,
         },
         Hint = false,
+        moveRight = function()
+        	Player.Image = Texture.PlayerR
+            gayloop("right")
+            check("right")
+        end,
+        moveLeft = function()
+        	Player.Image = Texture.PlayerL
+            gayloop("left")
+            check("left")
+        end,
+        moveUp = function()
+        	Player.Image = Texture.PlayerU
+            gayloop("up")
+            check("up")
+        end,
+        moveDown = function()
+        	Player.Image = Texture.PlayerD
+            gayloop("down")
+            check("down")
+        end,
+
     }
     Workspace = {
         ["Block"] = {},
@@ -163,36 +184,54 @@ function love.load()
         ["Hint"] = {},
         ["DDosKid"] = {},
         ["Ice"] = {},
+        ["IceSkates"]= {},
+        ["TFButton"] = {},
+        ["TFBlock"] = {},
     }
     Special = {
-        conveyor = 0,
-        bounceball = 0,
-        bounceList = {},
-        Iceway = "right",
-    }
+		conveyor = 0,
+		Iceway = "Down",
+		cooldownICE = 10;
+		TF_BOOL = false;
+		BounceCooldown = 0;
+	}
+	StageInfo = {
+		LevelIndex = {"one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen"},
+		LevelsInfo = {
+			one={hint="Hint: Collect all tiger biscuits to\nget past the iron door",NAME="LESSON 1"},
+			two={hint="",NAME="LESSON 2"},
+			three={hint="Hint: Use keys to open doors. Green\nkeys does never get destroyed when\nused",NAME="LESSON 3"},
+			four={hint="Hint: Plunger boots for force floors.\nFire boots for fire. Flippers for water.",NAME="LESSON 4"},
+			five={hint="",NAME="LESSON 5"},
+			six={hint="Hint: The thief takes your tools. New\nwalls can appear behind you when \nstepped on grey buttons.",NAME = "LESSON 5"},
+			seven={NAME="LESSON 6"},
+			eight={hint="Hint: Push blocks into water to make\ndirt.",NAME="LESSON 7"},
+			nine={hint="",NAME="Use your brain on this one!"},
+			ten={hint="dont you agree that this is a A-MAZE-ing\nlevel?",NAME="BRUSHFIRE"},
+			eleven={hint="Hint: Press \"R\" on the keyboard to \nrestart the level :-)",NAME="TOO MUCH DOTS!"},
+			twelve={hint="Looks like you will have to build\na bridge.",NAME="Castle moat"},
+			thirteen={NAME="Elementary"},
+			fourteen={NAME="FORCED ENTRY"},
+			fifteen={NAME="Seeing stars",hint="lets put your moving blocks to the\ntest."},
+
+		}
+	}
     BeatStage = false;
-    StageIndex = {"one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve"}
-    StageHints = {
-        "Hint: Collect all tiger biscuits to\nget past the iron door",
-        "",
-        "Hint: Use keys to open doors. Green\nkeys does never get destroyed when\nused",
-        "Hint: Plunger boots for force floors.\nFire boots for fire. Flippers for water.",
-        "",
-        "Hint: Push blocks into water to make\ndirt.",
-        "",
-        "Hint: The thief takes your tools. New\nwalls can appear behind you when \nstepped on grey buttons.",
-        "",
-        "No tiger biscuits to collect on this\nlevel, luckly.",
-        "Hint: Press \"R\" on the keyboard to \nrestart the level :-)",
-        "",
-    }
     index = {"Chip01","Chip02"}--,"Chip03","Chip04","Chip05"
     MusicIndex = index[love.math.random(#index)]
-
+    Music[MusicIndex]:setVolume(0.5) --0.5
     CurrentStage = 1
     
-
     function ResetStage(Lnext)
+    	Texture.PlayerR = love.graphics.newImage("/Texture/Character/CHRISTMAS/PlayerR.png");
+        Texture.PlayerL = love.graphics.newImage("/Texture/Character/CHRISTMAS/PlayerL.png");
+        Texture.PlayerD = love.graphics.newImage("/Texture/Character/CHRISTMAS/PlayerD.png");
+       	Texture.PlayerU = love.graphics.newImage("/Texture/Character/CHRISTMAS/PlayerU.png");
+        Texture.Player_WD = love.graphics.newImage("/Texture/Character/CHRISTMAS/Player_WD.png");
+        Texture.Player_WU = love.graphics.newImage("/Texture/Character/CHRISTMAS/Player_WU.png");
+   	    Texture.Player_WR = love.graphics.newImage("/Texture/Character/CHRISTMAS/Player_WR.png");
+        Texture.Player_WL = love.graphics.newImage("/Texture/Character/CHRISTMAS/Player_WL.png");
+    	local bonus = false;
         for i = 1,10 do
             for _,v in pairs(Workspace)do
                 for t,i in pairs(v)do
@@ -207,25 +246,59 @@ function love.load()
         for i,_ in pairs(Player.Inventory)do
             Player.Inventory[i] = false;
         end
-        if Lnext then
-            CurrentStage = CurrentStage + 1
-        end
         local File = {}
-        if CurrentStage == "test"then
-            for line in love.filesystem.lines("/Levels/TestStage")do
-                table.insert(File,line)
-            end
-        else
-            for line in love.filesystem.lines("/Levels/Stage"..CurrentStage)do
-                table.insert(File,line)
-            end
+        if Lnext then
+        	CurrentStage = CurrentStage + 1
+        	Music["Chip03"]:stop()
+    		Texture.PlayerR = love.graphics.newImage("/Texture/Character/CHRISTMAS/PlayerR.png");
+        	Texture.PlayerL = love.graphics.newImage("/Texture/Character/CHRISTMAS/PlayerL.png");
+       	    Texture.PlayerD = love.graphics.newImage("/Texture/Character/CHRISTMAS/PlayerD.png");
+       	    Texture.PlayerU = love.graphics.newImage("/Texture/Character/CHRISTMAS/PlayerU.png");
+        	Texture.Player_WD = love.graphics.newImage("/Texture/Character/CHRISTMAS/Player_WD.png");
+            Texture.Player_WU = love.graphics.newImage("/Texture/Character/CHRISTMAS/Player_WU.png");
+       	    Texture.Player_WR = love.graphics.newImage("/Texture/Character/CHRISTMAS/Player_WR.png");
+       	    Texture.Player_WL = love.graphics.newImage("/Texture/Character/CHRISTMAS/Player_WL.png");
+       	    if CurrentStage > 6 then
+       	    	local rad = love.math.random(1,1)
+            	if rad == 1 then
+            		CurrentStage = CurrentStage -1 
+            		Music[MusicIndex]:stop()
+            		Bonus=true;
+            		bonus = true;
+            		for line in love.filesystem.lines("/Levels/Bonus1")do
+        	    	    table.insert(File,line)
+        	    	end
+        	    	Texture.PlayerL = love.graphics.newImage("/Texture/Character/BONUS/PlayerR.png");
+        	    	Texture.PlayerR = love.graphics.newImage("/Texture/Character/BONUS/PlayerL.png");
+        	    	Texture.PlayerD = love.graphics.newImage("/Texture/Character/BONUS/PlayerD.png");
+        	    	Texture.PlayerU = love.graphics.newImage("/Texture/Character/BONUS/PlayerU.png");
+        	    	Texture.Player_WD = love.graphics.newImage("/Texture/Character/BONUS/Player_WD.png");
+        	    	Texture.Player_WU = love.graphics.newImage("/Texture/Character/BONUS/Player_WU.png");
+        	    	Texture.Player_WR = love.graphics.newImage("/Texture/Character/BONUS/Player_WR.png");
+        	    	Texture.Player_WL = love.graphics.newImage("/Texture/Character/BONUS/Player_WL.png");
+        	   		Player.Image = Texture.PlayerR
+            	end
+       	    end
+        end
+        if bonus == false then 
+        	Bonus = false;
+        	if CurrentStage == "test"then
+        	    for line in love.filesystem.lines("/Levels/TestStage")do
+        	        table.insert(File,line)
+        	    end
+        	else
+        	    for line in love.filesystem.lines("/Levels/Stage"..CurrentStage)do
+        	        table.insert(File,line)
+        	    end
+        	    love.window.setTitle("Knut's Adventure // ".. StageInfo.LevelsInfo[StageInfo.LevelIndex[CurrentStage]].NAME)
+        	end
         end
         for s,v in pairs(File)do
-            local line = s
-            for i = 0,#v,1 do
-                Text = string.sub(v,i,i)
-                Place(Text,i,s)
-            end
+       	    local line = s
+       	    for i = 0,#v,1 do
+       	        Text = string.sub(v,i,i)
+       	        Place(Text,i,s)
+       	    end
         end
         KexLeft = #Workspace["Point"]
         TimeLeft = 80
@@ -240,12 +313,12 @@ function love.load()
                             Sound.Splash:play()
                             if k=="right"then 
                                 Player.Image=Texture.Player_WR 
-                                elseif k=="left"then 
-                                    Player.Image=Texture.Player_WL 
-                                    elseif k=="up"then
-                                        Player.Image=Texture.Player_WU
-                                        elseif k=="down"then
-                                            Player.Image=Texture.Player_WD
+                            elseif k=="left"then 
+                                Player.Image=Texture.Player_WL 
+                            elseif k=="up"then
+                                Player.Image=Texture.Player_WU
+                            elseif k=="down"then
+                                Player.Image=Texture.Player_WD
                             end
                         else
                             Sound.Splash:stop()
@@ -257,7 +330,15 @@ function love.load()
             end
             if i == "Block"then
                 for _,v in pairs(v)do
-                    if (v.Y == Player.Y+MovementDirections[k].y)and(v.X == Player.X+MovementDirections[k].x)then Sound.Wall:play()return end
+                    if (v.Y == Player.Y+MovementDirections[k].y)and(v.X == Player.X+MovementDirections[k].x)then Sound.Wall:play()
+                    	for _,v in pairs(Workspace["Ice"])do
+                    		if v.X == Player.X and v.Y == Player.Y then 
+                    			local opposite = {["up"]="down",["down"]="up",["left"]="right",["right"]="left"}
+                    			Special.Iceway = opposite[Special.Iceway]
+                    		end
+                    	end
+                    	return 
+                    end
                 end
             end
             if i == "KexDoor" then
@@ -313,27 +394,34 @@ function love.load()
             end
             if i == "Moveable"then
                 for z,m in pairs(v)do
-                    if m.X==Player.X+MovementDirections[k].x and m.Y==Player.Y+MovementDirections[k].y then 
+                    if m.X==Player.X+MovementDirections[k].x and m.Y==Player.Y+MovementDirections[k].y then
+                    	local wx,wy,PlaceDirt = 0,0,false
                         for n,f in pairs(Workspace)do
                             for w,c in pairs(f)do
                                 if c.X == m.X+MovementDirections[k].x and c.Y == m.Y+MovementDirections[k].y then
-                                    if n=="Water"or n=="Bomb"then
+                                    if n=="Water" or n=="Bomb"then
+                                    	table.remove(v,z)
                                         table.remove(f,w)
-                                        table.remove(v,z)
                                         if n=="Water"then
-                                            d={};d.X=c.X;d.Y=c.Y
-                                            table.insert(Workspace["Dirt"],d)
+                                        	wx,wy,PlaceDirt=c.X,c.Y,true;
                                             Sound.Splash:play()
                                         else
                                             Sound.Burn:play()
                                         end
-                                    elseif n=="Hint"then
-                                    else Sound.Wall:play()return end
+                                    elseif n=="Hint" or n=="ConD" or n=="ConL" or n=="ConR" or n=="ConU"then
+                                    elseif n=="TFBlock" and c.BOOL==false then
+                                    else 
+                                    	Sound.Wall:play()return
+                                    end
                                 end
                             end
                         end
                         m.X = m.X+MovementDirections[k].x
                         m.Y = m.Y+MovementDirections[k].y
+                        if PlaceDirt then
+                        	local c = {X=wx,Y=wy}
+                        	table.insert(Workspace["Dirt"],c)
+                        end
                     end
                 end
             end
@@ -351,9 +439,7 @@ function love.load()
             if i == "Fire"then
                 for _,f in pairs(v)do
                     if (f.Y==Player.Y+MovementDirections[k].y)and(f.X==Player.X+MovementDirections[k].x)then
-                        if Player.Inventory.FireShoes then
-                            Sound.Burn:play()
-                        else
+                        if Player.Inventory.FireShoes then else
                             Sound.Burn:stop()
                             Sound.Burn:play()
                             Player.Dead = true
@@ -372,11 +458,43 @@ function love.load()
             if i == "DDosKid"then
                 for _,f in pairs(v)do
                     if f.X==Player.X+MovementDirections[k].x and f.Y==Player.Y+MovementDirections[k].y then
-<<<<<<< Updated upstream
-                        x = z +a 
-=======
-                        error("u got ddosd kiddo git prank n restrat")
->>>>>>> Stashed changes
+                        error("Git dddosed kiddo! yo will nao huve to start uver again HUEUEUEUEUe \n\n  xXxDdosMasterKidzxXx was here")
+                    end
+                end
+            end
+            if i == "TFButton"then
+            	for _,f in pairs(v)do
+                    if f.X==Player.X+MovementDirections[k].x and f.Y==Player.Y+MovementDirections[k].y then
+						if Special.TF_BOOL then
+							Special.TF_BOOL = false;
+						else
+							Special.TF_BOOL = true;
+						end
+						Sound.Button:stop()
+						Sound.Button:play()
+						for _,v in pairs(Workspace["TFBlock"])do
+							if v.BOOL then
+								v.BOOL = false;
+							else
+								v.BOOL = true;
+							end
+						end
+                    end
+                end
+            end
+            if i == "TFBlock"then
+                for _,v in pairs(v)do
+                    if (v.Y == Player.Y+MovementDirections[k].y)and(v.X == Player.X+MovementDirections[k].x)then 
+                    	if v.BOOL then
+                    		Sound.Wall:play()
+                    		for _,v in pairs(Workspace["Ice"])do
+                    			if v.X == Player.X and v.Y == Player.Y then 
+                    				local opposite = {["up"]="down",["down"]="up",["left"]="right",["right"]="left"}
+                    				Special.Iceway = opposite[Special.Iceway]
+                    			end
+                    		end
+                    		return 
+                   		end
                     end
                 end
             end
@@ -395,6 +513,7 @@ function love.load()
                     if v.X==Player.X and v.Y==Player.Y then
                         Sound.Win:play()
                         BeatStage = true
+                        Bonus = false;
                     end
                 end
             end
@@ -529,13 +648,19 @@ function love.load()
                     end
                 end
             end
+            if e=="IceSkates"and#f>=1 then
+                for i,v in pairs(f)do
+                    if Player.Y==v.Y and Player.X==v.X then
+                        Player.Inventory.IceSkates=true;
+                        table.remove(f,i)
+                        Sound.Get:stop()
+                        Sound.Get:play()
+                    end
+                end
+            end
         end
     end
     function Place(t,x,y)
-        local Add = function(s,x,y)
-            local a={X=x*BLOCKSIZE.X,Y=y*BLOCKSIZE.Y}
-            table.insert(Workspace[s],a)
-        end
         if t=="#"then
             Add("Block",x,y)
         elseif t=="o"then
@@ -589,13 +714,24 @@ function love.load()
         elseif t=="Q"then
             Add("Bomb",x,y)
         elseif t=="O"then
-            Add("BounceBall",x,y)
+        	local c = {X = x*BLOCKSIZE.X,Y = y*BLOCKSIZE.Y,RIGHT=false}
+            table.insert(Workspace["BounceBall"],c)
         elseif t=="H"then
             Add("Hint",x,y)
         elseif t=="D"then
             Add("DDosKid",x,y)
         elseif t=="i"then
             Add("Ice",x,y)
+        elseif t=="I"then
+            Add("IceSkates",x,y)
+        elseif t=="!"then
+            Add("TFButton",x,y)
+        elseif t=="E"then
+            local a = {X=x*BLOCKSIZE.X,Y=y*BLOCKSIZE.Y,BOOL = true}
+            table.insert(Workspace["TFBlock"],a)
+        elseif t=="e"then
+            local a = {X=x*BLOCKSIZE.X,Y=y*BLOCKSIZE.Y,BOOL = false}
+            table.insert(Workspace["TFBlock"],a)
         elseif t==","then
             for _,v in pairs(Workspace)do
                 for _,f in pairs(v)do
@@ -610,7 +746,6 @@ function love.load()
             end
         end
     end
-    Music[MusicIndex]:setVolume(0.4) --0.5
     Music[MusicIndex]:play()
     ResetStage()
 end
@@ -637,12 +772,16 @@ function love.keypressed(key)
         Music[MusicIndex]:play()
     end
     if key =="m"then
-        Music[MusicIndex]:setVolume(0) --0.5
-    end
-    if key =="p"then
-        Music[MusicIndex]:setVolume(3) --0.5
+    	if MUTED then
+    		Music[MusicIndex]:setVolume(0.5)
+    		MUTED = false;
+    	else
+    		Music[MusicIndex]:setVolume(0)
+    		MUTED = true;
+    	end
     end
     if key=="r"then
+    	Music["Chip03"]:stop()
         ResetStage()
         Player.Image = Texture.PlayerR
     end
@@ -661,75 +800,118 @@ function love.keyreleased(key)
     if key=="lshift"then
         Player.Wait = SPEED_SLOW
     end
-    Player.cooldown = 1000
 end
 
 function love.update()
-    Music[MusicIndex]:play()
-    if Player.Dead then Player.Image = Texture.PlayerR return end
-    if BeatStage then return end
-    --[[
+	if Bonus then
+		Music[MusicIndex]:stop()
+		Music["Chip03"]:setVolume(0.5)
+		Music["Chip03"]:play()
+	else
+		Music[MusicIndex]:play()
+	end
+    if Player.Dead then Player.Image = Texture.PlayerR;Music["Chip03"]:stop()Bonus=false; return end
+    if BeatStage then if Bonus then Bonus = false;end return end
     if #Workspace["BounceBall"]>=1 then
-        Special.bounceball = Special.bounceball + 1
-        if Special.bounceball >=15 then
-            Special.bounceball = 0
+        if Special.BounceCooldown >=20 then
             for _,v in pairs(Workspace["BounceBall"])do
                 for _,f in pairs(Workspace)do
                     for _,c in pairs(f)do
-                        local t = {50,-50};
-                        local Z = c.Way
-                        if c.X == v.X + t[Z] and c.Y == v.Y then
-                            if Z == 1 then
-                                Z = 2
-                            else
-                                Z = 1
-                            end
-                        end
-                        v.X = v.X + t[Z]
+                    	if v.RIGHT then
+                    		if c.X == v.X + BLOCKSIZE.X and c.Y == v.Y then
+                                v.RIGHT = false;
+                    		end
+                    		v.X = v.X + BLOCKSIZE.X
+                    	else
+                    		if c.X == v.X - BLOCKSIZE.X and c.Y == v.Y then
+                                v.RIGHT = true;
+                    		end
+                    		v.X = v.X - BLOCKSIZE.X
+                    	end
                     end
                 end
+                break
             end
         end
-        Special.bounceball = Special.bounceball + 1
+        Special.BounceCooldown = Special.BounceCooldown + 1
     end
-    --]]
     if #Workspace["ConD"]>=1 or#Workspace["ConL"]>=1 or#Workspace["ConR"]>=1 or#Workspace["ConU"]>=1 then
         if Special.conveyor == 5 then
             Special.conveyor = 0
             for e,f in pairs(Workspace)do
                 if Player.Inventory.HoverBoots then break end
                 if e == "ConD"then
+                	local BOOL=true
                     for _,f in pairs(f)do
+                    	if BOOL then
+                    		for _,m in pairs(Workspace["Moveable"])do
+                    		   	if m.X == f.X and m.Y == f.Y then
+                    		 		m.Y = m.Y + BLOCKSIZE.Y
+                    		 		BOOL=false;
+                    		   		break
+                    		    end
+                    		end
+                    	end
                         if (f.Y==Player.Y)and(f.X==Player.X)then
-                            gayloop("down")
-                            check("down")
+                            Player.moveDown();
+                            Special.Iceway = "down"
                             break
                         end
                     end
                 end
                 if e == "ConL"then
+                	local BOOL=true
                     for _,f in pairs(f)do
+                    	if BOOL then
+                    		for _,m in pairs(Workspace["Moveable"])do
+                    		   	if m.X == f.X and m.Y == f.Y then
+                    		 		m.X = m.X - BLOCKSIZE.X
+                    		 		BOOL=false;
+                    		   		break
+                    		    end
+                    		end
+                    	end
                         if (f.Y==Player.Y)and(f.X==Player.X)then
-                            gayloop("left")
-                            check("left")
+                            Player.moveLeft();
+                            Special.Iceway = "left"
                             break
                         end
                     end
                 end
                 if e == "ConR"then
+                	local BOOL = true;
                     for _,f in pairs(f)do
+                    	if BOOL then
+                    		for _,m in pairs(Workspace["Moveable"])do
+                    		   	if m.X == f.X and m.Y == f.Y then
+                    		 		m.X = m.X + BLOCKSIZE.X
+                    		 		BOOL=false;
+                    		   		break
+                    		    end
+                    		end
+                    	end
                         if (f.Y==Player.Y)and(f.X==Player.X)then
-                            gayloop("right")
-                            check("right")
+                            Player.moveRight();
+                            Special.Iceway = "right"
                             break
                         end
                     end
                 end
                 if e == "ConU"then
+                	local BOOL = true;
                     for _,f in pairs(f)do
+                    	if BOOL then
+                    		for _,m in pairs(Workspace["Moveable"])do
+                    		   	if m.X == f.X and m.Y == f.Y then
+                    		 		m.Y = m.Y - BLOCKSIZE.Y
+                    		 		BOOL=false;
+                    		   		break
+                    		    end
+                    		end
+                    	end
                         if (f.Y==Player.Y)and(f.X==Player.X)then
-                            gayloop("up")
-                            check("up")
+                            Player.moveUp();
+                            Special.Iceway = "up"
                             break
                         end
                     end
@@ -738,35 +920,47 @@ function love.update()
         end
         Special.conveyor = Special.conveyor + 1
     end
-
+    if #Workspace["Ice"]>=1 then
+    	if Player.Inventory.IceSkates == false then
+			Special.cooldownICE = Special.cooldownICE - 1
+			if Special.cooldownICE <= 0 then
+				Special.cooldownICE = 4;
+				for _,v in pairs(Workspace["Ice"])do
+					if v.X == Player.X and v.Y == Player.Y then
+						Player["move"..string.upper(string.sub(Special.Iceway,1,1))..string.sub(Special.Iceway,2)]()
+						Player.Sliding = true; break
+					else
+						Player.Sliding = false;
+					end
+				end
+			end
+		end
+	end
     Player.cooldown = Player.cooldown + 1
+    if Player.Sliding then return end
     if love.keyboard.isDown("up")then
         if Player.cooldown >= Player.Wait then
             Player.cooldown = 0
-            Player.Image = Texture.PlayerU
-            gayloop("up")
-            check("up")
+            Player.moveUp();
+            Special.Iceway = "up";
         end
     elseif love.keyboard.isDown("down")then
         if Player.cooldown >= Player.Wait then
             Player.cooldown = 0
-            Player.Image = Texture.PlayerD
-            gayloop("down")
-            check("down")
+            Player.moveDown();
+            Special.Iceway = "down";
         end
     elseif love.keyboard.isDown("right")then
         if Player.cooldown >= Player.Wait then
             Player.cooldown = 0
-            Player.Image = Texture.PlayerR
-            gayloop("right")
-            check("right")
+            Player.moveRight();
+            Special.Iceway = "right";
         end
     elseif love.keyboard.isDown("left")then
         if Player.cooldown >= Player.Wait then
             Player.cooldown = 0
-            Player.Image = Texture.PlayerL
-            gayloop("left")
-            check("left")
+            Player.moveLeft();
+            Special.Iceway = "left";
         end
     end
     if Player.image == Texture.Splash then Player.image = Texture.PlayerL end
@@ -798,6 +992,15 @@ function love.draw()
             end
         end
     end
+    for _,f in pairs(Workspace["TFBlock"])do
+    	if f.BOOL then
+       		love.graphics.draw(Texture.Block,f.X,f.Y,0,BLOCKSIZE.X*0.02,BLOCKSIZE.Y*0.02)
+       		love.graphics.draw(Texture.TFBlock,f.X,f.Y,0,BLOCKSIZE.X*0.02,BLOCKSIZE.Y*0.02)
+       	else
+      		love.graphics.draw(Texture.TFBlock,f.X,f.Y,0,BLOCKSIZE.X*0.02,BLOCKSIZE.Y*0.02)
+        end
+    end
+    love.graphics.setColor(255,255,255)
     love.graphics.draw(Player.Image,Player.X,Player.Y,0,BLOCKSIZE.X*0.02,BLOCKSIZE.Y*0.02)
     love.graphics.setColor(100,100,100)
     love.graphics.rectangle("fill",BLOCKSIZE.X*13,0,BLOCKSIZE.X*5,RESOLUTION.SCREEN_SIZE.y)
@@ -809,8 +1012,8 @@ function love.draw()
         love.graphics.print("Level: TEST",BLOCKSIZE.X*13.1,BLOCKSIZE.Y*0.1,0,1,1)
         love.graphics.print("\nBLOCK X: "..BLOCKSIZE.X.."\nBLOCK Y: "..BLOCKSIZE.Y.."\nPlayerPosX: "..Player.X.."\nPlayerPosY: "..Player.Y.."\nBlockPos X,Y "..Workspace["Block"][1].X.."\n"..Workspace["Block"][1].Y,BLOCKSIZE.X*13.1,BLOCKSIZE.Y*0.1,0,1,1)
     else
-        love.graphics.print("Level: ".. StageIndex[CurrentStage] ,BLOCKSIZE.X*13.5,BLOCKSIZE.Y*0.1)
-        love.graphics.print("\nTiger biscuits left: "..KexLeft ,BLOCKSIZE.X*13.5,BLOCKSIZE.Y*0.1)
+        love.graphics.print("Level: ".. StageInfo.LevelIndex[CurrentStage],BLOCKSIZE.X*13.1,BLOCKSIZE.Y*0.1)
+        love.graphics.print("\nTiger biscuits left: "..KexLeft ,BLOCKSIZE.X*13.1,BLOCKSIZE.Y*0.1)
     end
     love.graphics.setColor(200,200,200)
     love.graphics.rectangle("fill",BLOCKSIZE.X*13,BLOCKSIZE.Y*8.5,BLOCKSIZE.X*5,BLOCKSIZE.Y*2)
@@ -849,13 +1052,17 @@ function love.draw()
         love.graphics.setColor(255,255,255)
         love.graphics.draw(Texture.HoverBoots,BLOCKSIZE.X*15,BLOCKSIZE.Y*8.5,0,BLOCKSIZE.X*0.02,BLOCKSIZE.Y*0.02)
     end
+     if Player.Inventory.IceSkates then
+        love.graphics.setColor(255,255,255)
+        love.graphics.draw(Texture.IceSkates,BLOCKSIZE.X*16,BLOCKSIZE.Y*8.5,0,BLOCKSIZE.X*0.02,BLOCKSIZE.Y*0.02)
+    end
     --[[
         love.graphics.setColor(80,78,78)
         love.graphics.rectangle("fill",650,200,250,250)
     --]]
     if Player.Hint then
         love.graphics.setColor(255,255,255)
-        love.graphics.print(StageHints[CurrentStage],BLOCKSIZE.X*13.5,BLOCKSIZE.Y*4)
+        love.graphics.print(StageInfo.LevelsInfo[StageInfo.LevelIndex[CurrentStage]].hint,BLOCKSIZE.X*13.1,BLOCKSIZE.Y*4)
     end
     if BeatStage then
         love.graphics.setColor(150,150,150)

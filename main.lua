@@ -773,6 +773,10 @@ function love.keypressed(key)
         Music[MusicIndex]:stop()
         MusicIndex = index[love.math.random(#index)]
         Music[MusicIndex]:setVolume(0.4) --0.5
+        if MUTED then
+            Music[MusicIndex]:setVolume(0)
+        end
+
         Music[MusicIndex]:play()
     end
     if key =="m"then

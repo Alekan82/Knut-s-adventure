@@ -107,7 +107,11 @@ function love.load()
         Thief = love.audio.newSource("Sound/Thief.wav","static"),
         Burn = love.audio.newSource("Sound/burn.wav","static"),
         get1 = love.audio.newSource("Sound/get1.wav","static"),
-        Locked = love.audio.newSource("Sound/Locked.mp3","static")
+        locked = love.audio.newSource("Sound/Locked.mp3","static"),
+        lockRed = love.audio.newSource("Sound/LockRed.wav","static"),
+        lockGreen = love.audio.newSource("Sound/LockGreen.wav","static"),
+        lockBlue = love.audio.newSource("Sound/LockBlue.wav","static"),
+        lockYellow = love.audio.newSource("Sound/LockYellow.wav","static"),
     }
     Music = {
         Chip01 = love.audio.newSource("/Soundtracks/Chip01.mp3"),
@@ -347,7 +351,7 @@ function love.load()
             end
             if i == "KexDoor" then
                 for _,v in pairs(v)do
-                    if (v.Y == Player.Y+MovementDirections[k].y)and(v.X==Player.X+MovementDirections[k].x)and(KexLeft ~= 0) then Sound.Locked:play()return end
+                    if (v.Y == Player.Y+MovementDirections[k].y)and(v.X==Player.X+MovementDirections[k].x)and(KexLeft ~= 0) then Sound.locked:play()return end
                 end
             end
             if i == "LockR"then
@@ -357,7 +361,7 @@ function love.load()
                             table.remove(v,r)
                             Player.Inventory.RedKey=false;
                             Sound.Unlock:play()
-                        else Sound.Locked:play()return end
+                        else Sound.lockRed:play() return end
                     end
                 end
             end
@@ -369,7 +373,7 @@ function love.load()
                             Player.Inventory.BlueKey=false
                             Sound.Unlock:stop()
                             Sound.Unlock:play()
-                        else Sound.Locked:play()return end
+                        else Sound.lockBlue:play()return end
                     end
                 end
             end
@@ -380,7 +384,7 @@ function love.load()
                             table.remove(v,r)
                             Sound.Unlock:stop()
                             Sound.Unlock:play()
-                        else Sound.Locked:play()return end
+                        else Sound.lockGreen:play()return end
                     end
                 end
             end
@@ -392,7 +396,7 @@ function love.load()
                             Player.Inventory.YellowKey=false
                             Sound.Unlock:stop()
                             Sound.Unlock:play()
-                        else Sound.Locked:play()return end
+                        else Sound.lockYellow:play()return end
                     end
                 end
             end
